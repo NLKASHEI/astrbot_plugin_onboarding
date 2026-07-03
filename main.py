@@ -1,0 +1,149 @@
+# -*- coding: utf-8 -*-
+"""
+astrbot_plugin_onboarding - 棱镜娘新人引导系统 v1.0
+
+对齐类脑娘 GuidanceCog 实现：
+- 通过 pycord 原生 client.add_listener() 注册 on_member_update 事件
+- 当成员获得指定身份组（如「镜花浮梦」）时，自动发送可爱俏皮的欢迎私信
+- 引导新成员前往索引频道
+- 完全不需要修改 AstrBot 适配器代码
+
+依赖：AstrBot 已配置 Discord 适配器（pycord），intents.members 已启用。
+"""
+
+import asyncio
+import logging
+
+from astrbot.api.star import Context, Star
+from astrbot.api import logger, AstrBotConfig
+
+# ---------- 默认配置 ----------
+
+DEFAULT_WELCOME = (
+    "嗨嗨～欢迎来到 Prism 棱镜社区！✨\n\n"
+    "我是棱镜娘，大家都叫我宝宝～以后就是一家人啦！\n\n"
+    "社区里有好多有意思的东西，角色卡、AI 绘图、各种好玩的预设……"
+    "怕你第一次来转晕了，我帮你指个路：\n\n"
+    "👉 [点我去索引频道！]({index_url})\n\n"
+    "那里有社区的完整导航，想找什么都能找到～有什么不懂的随时问我嗷！"
+)
+
+DEFAULT_INDEX_URL = (
+    "https://discord.com/channels/1461731450058575986/1522145315115892827"
+)
+
+
+class OnboardingPlugin(Star):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
+        super().__init__(context)
+
+        cfg = config or {}
+        try:
+            self.target_role_id = int(cfg.get("target_role_id", "0") or "0")
+        except (ValueError, TypeError):
+            self.target_role_id = 0
+        self.index_channel_url = str(
+            cfg.get("index_channel_url", "") or DEFAULT_INDEX_URL
+        )
+        self.welcome_message = str(
+            cfg.get("welcome_message", "") or DEFAULT_WELCOME
+        )
+        self.bot_name = str(cfg.get("bot_name", "") or "棱镜娘")
+        self._hooked = False
+        self._discord_client = None
+
+        if self.target_role_id == 0:
+            logger.warning(
+                "[Onboarding] target_role_id 未配置，新人引导不会触发。"
+                "请在 WebUI 插件配置中填写 Discord 身份组 ID。"
+            )
+            return
+
+        # 延迟注册 Discord 原生事件监听
+        asyncio.create_task(self._hook_discord())
+
+    async def _hook_discord(self):
+        """通过 platform_manager 拿到 DiscordBotClient，用 add_listener 注册事件。"""
+        await asyncio.sleep(5)  # 等待平台适配器完全初始化
+
+        try:
+            platforms = self.context.platform_manager.get_insts()
+            for platform in platforms:
+                client = getattr(platform, "client", None)
+                if client is None:
+                    continue
+                # 检查是 discord.py / pycord 的 Client 实例
+                if not hasattr(client, "add_listener"):
+                    continue
+
+                # 用 pycord 原生 add_listener 注册，不依赖任何适配器修改
+                client.add_listener(self._on_member_update, "on_member_update")
+                self._hooked = True
+                self._discord_client = client
+                logger.info(
+                    "[Onboarding] 已注册 Discord on_member_update 监听，"
+                    f"监听身份组 ID={self.target_role_id}"
+                )
+                return
+
+            logger.warning(
+                "[Onboarding] 未找到 Discord 平台适配器（或 client 不支持 add_listener），"
+                "新人引导功能不会触发。"
+            )
+        except Exception as e:
+            logger.error(f"[Onboarding] 注册 Discord 事件失败: {e}", exc_info=True)
+
+    async def _on_member_update(self, before, after):
+        """Discord 成员更新事件 —— 检测身份组变更。"""
+        try:
+            # 忽略机器人自身
+            if before.bot or after.bot:
+                return
+
+            before_has = any(r.id == self.target_role_id for r in before.roles)
+            after_has = any(r.id == self.target_role_id for r in after.roles)
+
+            # 只在「新获得」角色时触发
+            if before_has or not after_has:
+                return
+
+            display = getattr(after, "display_name", None) or getattr(
+                after, "name", str(after.id)
+            )
+            logger.info(
+                f"[Onboarding] {display} 获得身份组，发送欢迎私信..."
+            )
+
+            message = self.welcome_message.format(
+                user_name=display,
+                user_mention=after.mention,
+                index_url=self.index_channel_url,
+            )
+
+            try:
+                await after.send(message)
+                logger.info(f"[Onboarding] 已发送欢迎私信给 {after.id} ({display})")
+            except Exception as send_err:
+                err_name = type(send_err).__name__
+                if "Forbidden" in err_name or "403" in str(send_err):
+                    logger.warning(
+                        f"[Onboarding] 无法发送私信给 {after.id}（用户关闭了私信）"
+                    )
+                else:
+                    logger.error(
+                        f"[Onboarding] 发送欢迎私信失败 ({after.id}): {send_err}"
+                    )
+
+        except Exception as e:
+            logger.error(f"[Onboarding] 处理成员更新事件失败: {e}", exc_info=True)
+
+    # ---- 测试命令（可选，方便调试）----
+
+    async def _get_help_text(self) -> str:
+        return (
+            f"**{self.bot_name} 新人引导系统**\n\n"
+            f"当前监听身份组 ID: `{self.target_role_id}`\n"
+            f"索引频道: {self.index_channel_url}\n"
+            f"回调已注册: {'✅ 是' if self._hooked else '❌ 否'}\n\n"
+            "当成员获得指定身份组时，会自动发送欢迎私信～"
+        )

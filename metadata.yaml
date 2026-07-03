@@ -1,0 +1,7 @@
+name: astrbot_plugin_onboarding
+desc: 棱镜娘新人引导系统 v1.0 — Discord身份组触发欢迎私信，可爱俏皮棱镜娘风格，引导新成员去索引频道。
+author: NLKASHEI
+version: 1.0.0
+repo: https://github.com/NLKASHEI/astrbot_plugin_onboarding
+support_platforms:
+  - discord

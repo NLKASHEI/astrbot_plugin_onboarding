@@ -1,0 +1,26 @@
+{
+  "target_role_id": {
+    "description": "触发身份组 ID",
+    "type": "text",
+    "default": "",
+    "hint": "Discord 身份组 ID（在 Discord 设置中开启开发者模式后右键身份组即可复制）。获得此身份组的成员将自动收到欢迎私信。"
+  },
+  "index_channel_url": {
+    "description": "索引频道链接",
+    "type": "text",
+    "default": "https://discord.com/channels/1461731450058575986/1522145315115892827",
+    "hint": "引导新成员前往的频道链接，会嵌入到欢迎消息中。"
+  },
+  "welcome_message": {
+    "description": "欢迎消息模板",
+    "type": "text",
+    "default": "嗨嗨～欢迎来到 Prism 棱镜社区！✨\n\n我是棱镜娘，大家都叫我宝宝～以后就是一家人啦！\n\n社区里有好多有意思的东西，角色卡、AI 绘图、各种好玩的预设……怕你第一次来转晕了，我帮你指个路：\n\n👉 [点我去索引频道！]({index_url})\n\n那里有社区的完整导航，想找什么都能找到～有什么不懂的随时问我嗷！",
+    "hint": "私信欢迎消息模板。支持 {user_name}（用户名）、{user_mention}（@提及）、{index_url}（索引频道链接）三个变量。支持 Markdown。"
+  },
+  "bot_name": {
+    "description": "Bot 昵称（配合人设）",
+    "type": "text",
+    "default": "棱镜娘",
+    "hint": "用于日志记录和回退消息。建议与 AstrBot 人格名称一致。"
+  }
+}
