@@ -64,35 +64,28 @@ class OnboardingPlugin(Star):
         asyncio.create_task(self._hook_discord())
 
     async def _hook_discord(self):
-        """通过 platform_manager 拿到 DiscordBotClient，用 add_listener 注册事件。"""
-        await asyncio.sleep(5)  # 等待平台适配器完全初始化
+        """轮询重试：每 5 秒尝试拿到 DiscordBotClient 并注册 on_member_update。"""
+        while not self._hooked:
+            await asyncio.sleep(5)
+            try:
+                platforms = self.context.platform_manager.get_insts()
+                for platform in platforms:
+                    client = getattr(platform, "client", None)
+                    if client is None:
+                        continue
+                    if not hasattr(client, "add_listener"):
+                        continue
 
-        try:
-            platforms = self.context.platform_manager.get_insts()
-            for platform in platforms:
-                client = getattr(platform, "client", None)
-                if client is None:
-                    continue
-                # 检查是 discord.py / pycord 的 Client 实例
-                if not hasattr(client, "add_listener"):
-                    continue
-
-                # 用 pycord 原生 add_listener 注册，不依赖任何适配器修改
-                client.add_listener(self._on_member_update, "on_member_update")
-                self._hooked = True
-                self._discord_client = client
-                logger.info(
-                    "[Onboarding] 已注册 Discord on_member_update 监听，"
-                    f"监听身份组 ID={self.target_role_id}"
-                )
-                return
-
-            logger.warning(
-                "[Onboarding] 未找到 Discord 平台适配器（或 client 不支持 add_listener），"
-                "新人引导功能不会触发。"
-            )
-        except Exception as e:
-            logger.error(f"[Onboarding] 注册 Discord 事件失败: {e}", exc_info=True)
+                    client.add_listener(self._on_member_update, "on_member_update")
+                    self._hooked = True
+                    self._discord_client = client
+                    logger.info(
+                        "[Onboarding] 已注册 Discord on_member_update 监听，"
+                        f"监听身份组 ID={self.target_role_id}"
+                    )
+                    return
+            except Exception as e:
+                logger.warning(f"[Onboarding] 注册 Discord 事件失败，5秒后重试: {e}")
 
     async def _on_member_update(self, before, after):
         """Discord 成员更新事件 —— 检测身份组变更。"""
