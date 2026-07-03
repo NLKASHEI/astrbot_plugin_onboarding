@@ -52,6 +52,7 @@ class OnboardingPlugin(Star):
         self.bot_name = str(cfg.get("bot_name", "") or "棱镜娘")
         self._hooked = False
         self._discord_client = None
+        self._sent = set()  # 已发送过欢迎 DM 的 user_id，防止重复
 
         if self.target_role_id == 0:
             logger.warning(
@@ -97,9 +98,11 @@ class OnboardingPlugin(Star):
             before_has = any(r.id == self.target_role_id for r in before.roles)
             after_has = any(r.id == self.target_role_id for r in after.roles)
 
-            # 只在「新获得」角色时触发
+            # 只在「新获得」角色时触发 + 去重
             if before_has or not after_has:
                 return
+            if after.id in self._sent:
+                return  # 已发送过，跳过
 
             display = getattr(after, "display_name", None) or getattr(
                 after, "name", str(after.id)
@@ -116,6 +119,7 @@ class OnboardingPlugin(Star):
 
             try:
                 await after.send(message)
+                self._sent.add(after.id)
                 logger.info(f"[Onboarding] 已发送欢迎私信给 {after.id} ({display})")
             except Exception as send_err:
                 err_name = type(send_err).__name__
