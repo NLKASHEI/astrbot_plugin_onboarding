@@ -141,10 +141,14 @@ class OnboardingPlugin(Star):
     @filter.command("onboarding")
     async def cmd_status(self, event: AstrMessageEvent):
         """查看新人引导系统状态"""
-        yield event.plain_result(
+        content = (
             f"## 🧭 {self.bot_name} 新人引导系统\n\n"
             f"**监听身份组 ID**: `{self.target_role_id}`\n"
             f"**索引频道**: {self.index_channel_url}\n"
             f"**Discord 回调已注册**: {'✅ 是' if self._hooked else '❌ 否（可能 Discord 未连接）'}\n\n"
             "当成员获得指定身份组时，会自动发送欢迎私信～"
         )
+        if getattr(event, 'interaction_followup_webhook', None):
+            await event.interaction_followup_webhook.send(content, ephemeral=True)
+            return
+        yield event.plain_result(content)
