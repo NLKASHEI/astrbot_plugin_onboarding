@@ -14,6 +14,7 @@ astrbot_plugin_onboarding - 棱镜娘新人引导系统 v1.0
 import asyncio
 import logging
 
+from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star
 from astrbot.api import logger, AstrBotConfig
 
@@ -137,13 +138,13 @@ class OnboardingPlugin(Star):
         except Exception as e:
             logger.error(f"[Onboarding] 处理成员更新事件失败: {e}", exc_info=True)
 
-    # ---- 测试命令（可选，方便调试）----
-
-    async def _get_help_text(self) -> str:
-        return (
-            f"**{self.bot_name} 新人引导系统**\n\n"
-            f"当前监听身份组 ID: `{self.target_role_id}`\n"
-            f"索引频道: {self.index_channel_url}\n"
-            f"回调已注册: {'✅ 是' if self._hooked else '❌ 否'}\n\n"
+    @filter.command("onboarding")
+    async def cmd_status(self, event: AstrMessageEvent):
+        """查看新人引导系统状态"""
+        yield event.plain_result(
+            f"## 🧭 {self.bot_name} 新人引导系统\n\n"
+            f"**监听身份组 ID**: `{self.target_role_id}`\n"
+            f"**索引频道**: {self.index_channel_url}\n"
+            f"**Discord 回调已注册**: {'✅ 是' if self._hooked else '❌ 否（可能 Discord 未连接）'}\n\n"
             "当成员获得指定身份组时，会自动发送欢迎私信～"
         )
