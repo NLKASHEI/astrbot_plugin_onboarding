@@ -77,7 +77,7 @@ class OnboardingPlugin(Star):
                     if not hasattr(client, "add_listener"):
                         continue
 
-                    client.add_listener(self._on_member_update, "on_member_update")
+                    client.add_listener(self._on_member_update, "member_update")
                     self._hooked = True
                     self._discord_client = client
                     logger.info(
@@ -94,6 +94,13 @@ class OnboardingPlugin(Star):
             # 忽略机器人自身
             if before.bot or after.bot:
                 return
+
+            logger.debug(
+                f"[Onboarding] on_member_update: user={after.id} "
+                f"before_roles={[r.id for r in before.roles]} "
+                f"after_roles={[r.id for r in after.roles]} "
+                f"target={self.target_role_id}"
+            )
 
             before_has = any(r.id == self.target_role_id for r in before.roles)
             after_has = any(r.id == self.target_role_id for r in after.roles)
