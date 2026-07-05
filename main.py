@@ -61,32 +61,45 @@ class OnboardingPlugin(Star):
             )
             return
 
+        logger.info(f"[Onboarding] 插件初始化完成，target_role_id={self.target_role_id}，开始注册 Discord 事件监听")
+
         # 延迟注册 Discord 原生事件监听
         asyncio.create_task(self._hook_discord())
 
     async def _hook_discord(self):
         """轮询重试：每 5 秒尝试拿到 DiscordBotClient 并注册 on_member_update。"""
+        logger.info(f"[Onboarding] 开始轮询 Discord 客户端，target_role_id={self.target_role_id}")
         while not self._hooked:
             await asyncio.sleep(5)
             try:
                 platforms = self.context.platform_manager.get_insts()
-                for platform in platforms:
+                logger.info(f"[Onboarding] 找到 {len(platforms)} 个平台实例")
+                for i, platform in enumerate(platforms):
                     client = getattr(platform, "client", None)
+                    logger.info(
+                        f"[Onboarding] 平台[{i}]: type={type(platform).__name__}, "
+                        f"has_client={client is not None}, "
+                        f"has_add_listener={hasattr(client, 'add_listener') if client else 'N/A'}"
+                    )
                     if client is None:
                         continue
                     if not hasattr(client, "add_listener"):
                         continue
 
+                    # pycord 不同版本 dispatch 查 listener 的 key 可能带/不带 on_ 前缀
                     client.add_listener(self._on_member_update, "member_update")
+                    client.add_listener(self._on_member_update, "on_member_update")
                     self._hooked = True
                     self._discord_client = client
                     logger.info(
-                        "[Onboarding] 已注册 Discord on_member_update 监听，"
-                        f"监听身份组 ID={self.target_role_id}"
+                        f"[Onboarding] ✅ 已注册 Discord on_member_update 监听，"
+                        f"target_role_id={self.target_role_id}, "
+                        f"intents.members={getattr(client, 'intents', None) and client.intents.members}"
                     )
                     return
+                logger.info("[Onboarding] 本轮未找到合适的客户端，5秒后重试...")
             except Exception as e:
-                logger.warning(f"[Onboarding] 注册 Discord 事件失败，5秒后重试: {e}")
+                logger.warning(f"[Onboarding] 注册 Discord 事件失败，5秒后重试: {e}", exc_info=True)
 
     async def _on_member_update(self, before, after):
         """Discord 成员更新事件 —— 检测身份组变更。"""
