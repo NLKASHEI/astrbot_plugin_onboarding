@@ -86,8 +86,6 @@ class OnboardingPlugin(Star):
                     if not hasattr(client, "add_listener"):
                         continue
 
-                    # pycord 不同版本 dispatch 查 listener 的 key 可能带/不带 on_ 前缀
-                    client.add_listener(self._on_member_update, "member_update")
                     client.add_listener(self._on_member_update, "on_member_update")
                     self._hooked = True
                     self._discord_client = client
