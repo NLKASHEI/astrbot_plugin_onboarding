@@ -67,20 +67,18 @@ class OnboardingPlugin(Star):
         asyncio.create_task(self._hook_discord())
 
     async def _hook_discord(self):
-        """轮询重试：每 5 秒尝试拿到 DiscordBotClient 并注册 on_member_update。"""
+        """轮询重试：每 5 秒尝试拿到 DiscordBotClient 并注册 on_member_update。最多重试 12 次（1 分钟）。"""
         logger.info(f"[Onboarding] 开始轮询 Discord 客户端，target_role_id={self.target_role_id}")
-        while not self._hooked:
+        retry = 0
+        max_retry = 3
+        while not self._hooked and retry < max_retry:
+            retry += 1
             await asyncio.sleep(5)
             try:
                 platforms = self.context.platform_manager.get_insts()
-                logger.info(f"[Onboarding] 找到 {len(platforms)} 个平台实例")
-                for i, platform in enumerate(platforms):
+                logger.info(f"[Onboarding] 第{retry}次尝试，找到 {len(platforms)} 个平台实例")
+                for platform in platforms:
                     client = getattr(platform, "client", None)
-                    logger.info(
-                        f"[Onboarding] 平台[{i}]: type={type(platform).__name__}, "
-                        f"has_client={client is not None}, "
-                        f"has_add_listener={hasattr(client, 'add_listener') if client else 'N/A'}"
-                    )
                     if client is None:
                         continue
                     if not hasattr(client, "add_listener"):
@@ -95,9 +93,13 @@ class OnboardingPlugin(Star):
                         f"intents.members={getattr(client, 'intents', None) and client.intents.members}"
                     )
                     return
-                logger.info("[Onboarding] 本轮未找到合适的客户端，5秒后重试...")
             except Exception as e:
-                logger.warning(f"[Onboarding] 注册 Discord 事件失败，5秒后重试: {e}", exc_info=True)
+                logger.warning(f"[Onboarding] 第{retry}次注册失败: {e}")
+        if not self._hooked:
+            logger.error(
+                f"[Onboarding] ❌ 已重试{max_retry}次仍无法注册 Discord 事件，"
+                "新人引导功能不会触发。请检查 Discord 适配器是否正常连接。"
+            )
 
     async def _on_member_update(self, before, after):
         """Discord 成员更新事件 —— 检测身份组变更。"""
