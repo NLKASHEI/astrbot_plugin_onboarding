@@ -120,7 +120,7 @@ class OnboardingPlugin(Star):
 
     async def _hook_discord(self):
         """轮询重试：每 5 秒尝试拿到 DiscordBotClient 并注册事件监听。最多重试 3 次（约 15 秒）。"""
-        logger.info(f"[Onboarding] 开始轮询 Discord 客户端，target_role_id={self.target_role_id}")
+        logger.info(f"[Onboarding] 开始轮询 Discord 客户端（阶段一 buffer={self._buffer_role_id_int} 阶段二 target={self.target_role_id}）")
         retry = 0
         max_retry = 3
         while not self._hooked and retry < max_retry:
@@ -142,8 +142,9 @@ class OnboardingPlugin(Star):
                     self._discord_client = client
                     logger.info(
                         f"[Onboarding] ✅ 已注册 Discord 事件监听："
-                        f"on_member_update (target_role_id={self.target_role_id}), "
-                        f"on_member_join (enable_join_notice={self.enable_join_notice}), "
+                        f"on_member_join（仅记录日志），"
+                        f"on_member_update 阶段一 buffer={self._buffer_role_id_int} → 入服须知，"
+                        f"阶段二 target={self.target_role_id} → 欢迎/索引，"
                         f"intents.members={getattr(client, 'intents', None) and client.intents.members}"
                     )
                     return
