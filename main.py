@@ -164,7 +164,7 @@ class OnboardingPlugin(Star):
                 member, "name", str(member.id)
             )
             logger.info(
-                f"[Onboarding] 检测到新成员 {display} ({member.id}) 加入服务器，发送入服须知私信..."
+                f"[Onboarding] 检测到新成员 {display} ({member.id}) 加入服务器，准备发送入服须知私信 → {self.notice_channel_url}"
             )
 
             message = self.join_notice_message.format(
@@ -178,7 +178,7 @@ class OnboardingPlugin(Star):
                 await member.send(message)
                 self._join_sent.add(member.id)
                 logger.info(
-                    f"[Onboarding] 已发送入服须知私信给 {member.id} ({display})"
+                    f"[Onboarding] ✅ 已发送【入服须知】私信给 {member.id} ({display})"
                 )
             except Exception as send_err:
                 err_name = type(send_err).__name__
@@ -224,8 +224,9 @@ class OnboardingPlugin(Star):
                     and str(self.target_role_id) == self.buffer_role_id
                     and after.id in self._join_sent):
                 logger.info(
-                    f"[Onboarding] {display} 获得身份组但已在入服提醒中通知过"
-                    "（缓冲组与目标身份组相同），跳过欢迎私信"
+                    f"[Onboarding] ⏭️ {display} 获得身份组 {self.target_role_id}，"
+                    "但缓冲组与目标身份组相同且该用户已通过 on_member_join 收到【入服须知】私信，"
+                    "跳过【欢迎/索引】私信，避免重复发送"
                 )
                 return
 
@@ -233,7 +234,7 @@ class OnboardingPlugin(Star):
                 after, "name", str(after.id)
             )
             logger.info(
-                f"[Onboarding] {display} 获得身份组，发送欢迎私信..."
+                f"[Onboarding] {display} 获得身份组 {self.target_role_id}，准备发送欢迎私信（索引频道） → {self.index_channel_url}"
             )
 
             message = self.welcome_message.format(
@@ -245,7 +246,9 @@ class OnboardingPlugin(Star):
             try:
                 await after.send(message)
                 self._sent.add(after.id)
-                logger.info(f"[Onboarding] 已发送欢迎私信给 {after.id} ({display})")
+                logger.info(
+                    f"[Onboarding] ✅ 已发送【欢迎/索引】私信给 {after.id} ({display})，引导前往 {self.index_channel_url}"
+                )
             except Exception as send_err:
                 err_name = type(send_err).__name__
                 if "Forbidden" in err_name or "403" in str(send_err):
