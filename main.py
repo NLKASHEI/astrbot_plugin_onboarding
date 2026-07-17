@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-astrbot_plugin_onboarding - 棱镜娘新人引导系统 v1.2.0
+astrbot_plugin_onboarding - 棱镜娘新人引导系统 v1.2.1
 
 对齐类脑娘 GuidanceCog 实现：
 - 通过 pycord 原生 client.add_listener() 注册 on_member_join 与 on_member_update 事件

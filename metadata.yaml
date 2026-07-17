@@ -1,7 +1,7 @@
 name: astrbot_plugin_onboarding
-desc: 棱镜娘新人引导系统 v1.2 — 两阶段引导：缓冲组→入服须知私信，正式身份组→欢迎/索引私信，可爱俏皮棱镜娘风格。
+desc: 棱镜娘新人引导系统 v1.2.1 — 两阶段引导：缓冲组→入服须知私信，正式身份组→欢迎/索引私信，可爱俏皮棱镜娘风格。
 author: NLKASHEI
-version: 1.2.0
+version: 1.2.1
 repo: https://github.com/NLKASHEI/astrbot_plugin_onboarding
 support_platforms:
   - discord
