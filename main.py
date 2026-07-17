@@ -136,6 +136,16 @@ class OnboardingPlugin(Star):
                     if not hasattr(client, "add_listener"):
                         continue
 
+                    # 先移除旧监听器防止重载残留导致重复注册
+                    try:
+                        client.remove_listener(self._on_member_update)
+                    except Exception:
+                        pass
+                    try:
+                        client.remove_listener(self._on_member_join)
+                    except Exception:
+                        pass
+
                     client.add_listener(self._on_member_update, "on_member_update")
                     client.add_listener(self._on_member_join, "on_member_join")
                     self._hooked = True
