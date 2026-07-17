@@ -15,7 +15,7 @@
     "description": "欢迎消息模板",
     "type": "text",
     "default": "嗨嗨～欢迎来到 Prism 棱镜社区！✨\n\n我是棱镜娘，大家都叫我宝宝～以后就是一家人啦！\n\n社区里有好多有意思的东西，角色卡、AI 绘图、各种好玩的预设…… 怕你第一次来转晕了，我帮你指个路：\n\n👉 [点我去索引频道！]({index_url})\n\n那里有社区的完整导航，想找什么都能找到～有什么不懂的随时问我嗷！",
-    "hint": "私信欢迎消息模板。支持 {user_name}（用户名）、{user_mention}（@提及）、{index_url}（索引频道链接）三个变量。支持 Markdown。"
+    "hint": "正式成员欢迎消息模板（阶段二）。成员获得正式身份组时发送。支持 {user_name}（用户名）、{user_mention}（@提及）、{index_url}（索引频道链接）三个变量。支持 Markdown。"
   },
   "bot_name": {
     "description": "Bot 昵称（配合人设）",
@@ -27,19 +27,19 @@
     "description": "入服须知频道链接",
     "type": "text",
     "default": "https://discord.com/channels/1461731450058575986/1521138419131088916",
-    "hint": "新成员加入服务器时，私信中引导前往的入服须知频道链接。确认入服须知后即可脱离缓冲组、解锁完整功能。"
+    "hint": "新成员获得缓冲组时，私信中引导前往的入服须知频道链接。确认入服须知后即可脱离缓冲组、解锁完整功能。"
   },
   "join_notice_message": {
     "description": "入服提醒消息模板",
     "type": "text",
     "default": "哈喽哈喽～欢迎新人宝宝来到 Prism 棱镜社区！✨\n\n我是棱镜娘，大家都叫我宝宝～先别急着到处跑嗷，有一件超重要的事情要你先做：\n\n👉 [点我去看看入服须知]({notice_url})\n\n认真读完入服须知并确认之后，就能脱离缓冲组，解锁社区的完整功能啦～角色卡、AI 绘图、各种好玩的预设都在等你嗷！\n\n有什么不懂的随时戳我，宝宝一直都在～",
-    "hint": "新成员加入服务器时发送的私信模板。支持 {user_name}（用户名）、{user_mention}（@提及）、{notice_url}（入服须知频道链接）、{buffer_role_id}（缓冲组 ID）四个变量。支持 Markdown。"
+    "hint": "新成员获得缓冲组时发送的私信模板（阶段一）。支持 {user_name}（用户名）、{user_mention}（@提及）、{notice_url}（入服须知频道链接）、{buffer_role_id}（缓冲组 ID）四个变量。支持 Markdown。"
   },
   "enable_join_notice": {
     "description": "启用入服提醒",
     "type": "bool",
     "default": true,
-    "hint": "开启后，当有新成员加入服务器时，会自动发送入服须知私信提醒。"
+    "hint": "开启后，当新成员获得缓冲组时，会自动发送【入服须知】私信提醒。关闭则阶段一不生效。"
   },
   "buffer_role_id": {
     "description": "缓冲组身份组 ID",
