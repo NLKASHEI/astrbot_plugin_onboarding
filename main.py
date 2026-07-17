@@ -217,6 +217,18 @@ class OnboardingPlugin(Star):
             if after.id in self._sent:
                 return  # 已发送过，跳过
 
+            # 互斥保护：如果缓冲组 ID 与目标身份组相同，且用户刚加入服务器
+            # （已通过 on_member_join 收到入服须知私信），说明这只是自动分配缓冲组，
+            # 并非真正的"毕业"，跳过欢迎私信，避免短时间内连发两条消息
+            if (self.buffer_role_id
+                    and str(self.target_role_id) == self.buffer_role_id
+                    and after.id in self._join_sent):
+                logger.info(
+                    f"[Onboarding] {display} 获得身份组但已在入服提醒中通知过"
+                    "（缓冲组与目标身份组相同），跳过欢迎私信"
+                )
+                return
+
             display = getattr(after, "display_name", None) or getattr(
                 after, "name", str(after.id)
             )
